@@ -40,6 +40,56 @@ function normalizeByte(value) {
 }
 
 /**
+ * Lee una posicion de memoria.
+ * @param {number} address Direccion entre 0 y 255.
+ * @return {number} Byte almacenado en la direccion.
+ */
+function Read(address) {
+  validateAddress(address);
+  return RAM[address];
+}
+
+/**
+ * Escribe un byte en una posicion de memoria.
+ * @param {number} address Direccion entre 0 y 255.
+ * @param {number} value Valor a almacenar.
+ */
+function Write(address, value) {
+  validateAddress(address);
+  RAM[address] = normalizeByte(value);
+}
+
+/**
+ * Convierte una direccion o byte a hexadecimal de dos digitos.
+ */
+function toHex8(value) {
+  return normalizeByte(value).toString(16).toUpperCase().padStart(2, '0') + 'h';
+}
+
+/**
+ * Convierte un byte a binario de ocho bits.
+ */
+function toBinary8(value) {
+  return normalizeByte(value).toString(2).padStart(8, '0');
+}
+
+/**
+ * Devuelve una fila preparada para mostrar una celda de memoria.
+ */
+function inspectMemory(address) {
+  const value = Read(address);
+
+  return {
+    address: address,
+    addressHex: toHex8(address),
+    decimal: value,
+    hexadecimal: toHex8(value),
+    binary: toBinary8(value),
+    segment: address <= CODE_END ? 'CODE' : 'DATA'
+  };
+}
+
+/**
  * Devuelve una copia del estado completo de RAM.
  * Se usa para evitar modificar la memoria desde otros modulos por accidente.
  */
