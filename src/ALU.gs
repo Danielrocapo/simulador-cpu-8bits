@@ -1,5 +1,5 @@
 // Unidad Aritmetico-Logica (ALU) de 8 bits.
-// Operaciones aritmeticas iniciales y actualizacion de banderas.
+// Operaciones aritmeticas y logicas con actualizacion de banderas.
 
 /**
  * Actualiza las banderas ZF y SF usando un resultado de 8 bits.
@@ -47,7 +47,6 @@ function aluSUB(left, right) {
 
 /**
  * Incrementa un valor de 8 bits en una unidad.
- * Reutiliza ADD para mantener el mismo manejo de banderas.
  */
 function aluINC(value) {
   return aluADD(value, 1);
@@ -55,7 +54,6 @@ function aluINC(value) {
 
 /**
  * Decrementa un valor de 8 bits en una unidad.
- * Reutiliza SUB para mantener el mismo manejo de banderas.
  */
 function aluDEC(value) {
   return aluSUB(value, 1);
@@ -67,4 +65,44 @@ function aluDEC(value) {
  */
 function aluCMP(left, right) {
   aluSUB(left, right);
+}
+
+/**
+ * AND bit a bit.
+ */
+function aluAND(left, right) {
+  const result = normalizeByte(left) & normalizeByte(right);
+  setFlag('CF', 0);
+  updateResultFlags(result);
+  return result;
+}
+
+/**
+ * OR bit a bit.
+ */
+function aluOR(left, right) {
+  const result = normalizeByte(left) | normalizeByte(right);
+  setFlag('CF', 0);
+  updateResultFlags(result);
+  return result;
+}
+
+/**
+ * XOR bit a bit.
+ */
+function aluXOR(left, right) {
+  const result = normalizeByte(left) ^ normalizeByte(right);
+  setFlag('CF', 0);
+  updateResultFlags(result);
+  return result;
+}
+
+/**
+ * NOT bit a bit limitado a 8 bits.
+ */
+function aluNOT(value) {
+  const result = normalizeByte(~normalizeByte(value));
+  setFlag('CF', 0);
+  updateResultFlags(result);
+  return result;
 }
