@@ -14,15 +14,9 @@ function fetchPhase() {
   setRegister('PC', getRegister('PC') + 1);
 }
 
-// Instruccion decodificada y lista para Execute.
 let decodedInstruction = null;
-
-// Escritura pendiente preparada por Execute y aplicada por Store.
 let pendingWrite = null;
 
-/**
- * Lee un byte operando desde la direccion actual del PC.
- */
 function readOperandByte() {
   setRegister('MAR', getRegister('PC'));
   setRegister('MDR', Read(getRegister('MAR')));
@@ -31,9 +25,6 @@ function readOperandByte() {
   return getRegister('MDR');
 }
 
-/**
- * Ejecuta la fase DECODE.
- */
 function decodePhase() {
   const opcode = getRegister('IR');
   const instructionInfo = getInstructionInfo(opcode);
@@ -53,9 +44,6 @@ function decodePhase() {
   return decodedInstruction;
 }
 
-/**
- * Ejecuta la instruccion previamente decodificada.
- */
 function executePhase() {
   if (!decodedInstruction) {
     throw new Error('No hay una instruccion decodificada.');
@@ -87,6 +75,30 @@ function executePhase() {
     return;
   }
 
+  if (name === 'LOAD') {
+    const registro = getRegisterFromCode(op[0]);
+    const direccion = op[1];
+
+    pendingWrite = {
+      type: 'register',
+      target: registro,
+      value: Read(direccion)
+    };
+    return;
+  }
+
+  if (name === 'STORE') {
+    const direccion = op[0];
+    const registro = getRegisterFromCode(op[1]);
+
+    pendingWrite = {
+      type: 'memory',
+      address: direccion,
+      value: getRegister(registro)
+    };
+    return;
+  }
+
   if (name === 'ADD_REG_IMM') {
     const registro = getRegisterFromCode(op[0]);
 
@@ -105,10 +117,7 @@ function executePhase() {
     pendingWrite = {
       type: 'register',
       target: destino,
-      value: aluADD(
-        getRegister(destino),
-        getRegister(origen)
-      )
+      value: aluADD(getRegister(destino), getRegister(origen))
     };
     return;
   }
@@ -131,10 +140,7 @@ function executePhase() {
     pendingWrite = {
       type: 'register',
       target: destino,
-      value: aluSUB(
-        getRegister(destino),
-        getRegister(origen)
-      )
+      value: aluSUB(getRegister(destino), getRegister(origen))
     };
     return;
   }
@@ -171,21 +177,13 @@ function executePhase() {
     const primero = getRegisterFromCode(op[0]);
     const segundo = getRegisterFromCode(op[1]);
 
-    aluCMP(
-      getRegister(primero),
-      getRegister(segundo)
-    );
+    aluCMP(getRegister(primero), getRegister(segundo));
     return;
   }
 
-  throw new Error(
-    'Execute todavia no implementado para: ' + name
-  );
+  throw new Error('Execute todavia no implementado para: ' + name);
 }
 
-/**
- * Aplica la escritura preparada por Execute.
- */
 function storePhase() {
   if (!pendingWrite) {
     return;
@@ -195,6 +193,16 @@ function storePhase() {
     setRegister(
       pendingWrite.target,
       pendingWrite.value
+    );
+  }
+
+  if (pendingWrite.type === 'memory') {
+    setRegister('MAR', pendingWrite.address);
+    setRegister('MDR', pendingWrite.value);
+
+    Write(
+      getRegister('MAR'),
+      getRegister('MDR')
     );
   }
 
