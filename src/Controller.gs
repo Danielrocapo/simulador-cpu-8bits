@@ -17,6 +17,9 @@ function fetchPhase() {
 // Instruccion decodificada y lista para Execute.
 let decodedInstruction = null;
 
+// Escritura pendiente preparada por Execute y aplicada por Store.
+let pendingWrite = null;
+
 /**
  * Lee un byte operando desde la direccion actual del PC.
  */
@@ -52,7 +55,7 @@ function decodePhase() {
 
 /**
  * Ejecuta la instruccion previamente decodificada.
- * Primera implementacion: MOV registro, inmediato.
+ * Por ahora prepara la escritura de MOV registro, inmediato.
  */
 function executePhase() {
   if (!decodedInstruction) {
@@ -66,9 +69,32 @@ function executePhase() {
     const registerName = getRegisterFromCode(operands[0]);
     const value = operands[1];
 
-    setRegister(registerName, value);
+    pendingWrite = {
+      type: 'register',
+      target: registerName,
+      value: value
+    };
+
     return;
   }
 
   throw new Error('Execute todavia no implementado para: ' + name);
+}
+
+/**
+ * Aplica la escritura preparada por Execute.
+ */
+function storePhase() {
+  if (!pendingWrite) {
+    return;
+  }
+
+  if (pendingWrite.type === 'register') {
+    setRegister(
+      pendingWrite.target,
+      pendingWrite.value
+    );
+  }
+
+  pendingWrite = null;
 }
