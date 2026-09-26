@@ -49,3 +49,26 @@ function decodePhase() {
 
   return decodedInstruction;
 }
+
+/**
+ * Ejecuta la instruccion previamente decodificada.
+ * Primera implementacion: MOV registro, inmediato.
+ */
+function executePhase() {
+  if (!decodedInstruction) {
+    throw new Error('No hay una instruccion decodificada.');
+  }
+
+  const name = decodedInstruction.name;
+  const operands = decodedInstruction.operands;
+
+  if (name === 'MOV_REG_IMM') {
+    const registerName = getRegisterFromCode(operands[0]);
+    const value = operands[1];
+
+    setRegister(registerName, value);
+    return;
+  }
+
+  throw new Error('Execute todavia no implementado para: ' + name);
+}
