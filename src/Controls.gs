@@ -1,4 +1,5 @@
 const SIM_STATE_KEY = 'SIMULATOR_STATE';
+const RUN_STATE_KEY = 'SIMULATOR_RUNNING';
 
 let currentPhase = 'FETCH';
 
@@ -43,7 +44,24 @@ function loadSimulatorState() {
     state.pendingWrite || null;
 }
 
+function setRunning(running) {
+  PropertiesService
+    .getDocumentProperties()
+    .setProperty(
+      RUN_STATE_KEY,
+      running ? '1' : '0'
+    );
+}
+
+function isRunning() {
+  return PropertiesService
+    .getDocumentProperties()
+    .getProperty(RUN_STATE_KEY) === '1';
+}
+
 function loadDemoProgram() {
+  setRunning(false);
+
   resetCPU();
   resetMemory();
 
@@ -165,7 +183,60 @@ function stepSimulator() {
   SpreadsheetApp.flush();
 }
 
+function runSimulator() {
+  loadSimulatorState();
+
+  if (Read(getRegister('PC')) === 0x00) {
+    appendMicroLog(
+      'No hay programa cargado. Use LOAD primero.'
+    );
+
+    renderSimulatorUI();
+    return;
+  }
+
+  if (CPU.halted) {
+    appendMicroLog(
+      'CPU detenida. Use LOAD o RESET.'
+    );
+
+    renderSimulatorUI();
+    return;
+  }
+
+  setRunning(true);
+  appendMicroLog('RUN iniciado');
+
+  while (isRunning()) {
+    loadSimulatorState();
+
+    if (CPU.halted) {
+      setRunning(false);
+      appendMicroLog('RUN finalizado por HLT');
+      renderSimulatorUI();
+      break;
+    }
+
+    stepSimulator();
+    Utilities.sleep(300);
+  }
+}
+
+function pauseSimulator() {
+  setRunning(false);
+
+  loadSimulatorState();
+
+  appendMicroLog('PAUSE');
+
+  renderSimulatorUI();
+
+  SpreadsheetApp.flush();
+}
+
 function resetSimulator() {
+  setRunning(false);
+
   resetCPU();
   resetMemory();
 
