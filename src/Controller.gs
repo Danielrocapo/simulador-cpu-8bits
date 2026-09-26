@@ -181,6 +181,30 @@ function executePhase() {
     return;
   }
 
+  if (name === 'JMP') {
+    setRegister('PC', op[0]);
+    return;
+  }
+
+  if (name === 'JZ') {
+    if (CPU.ZF === 1) {
+      setRegister('PC', op[0]);
+    }
+    return;
+  }
+
+  if (name === 'JNZ') {
+    if (CPU.ZF === 0) {
+      setRegister('PC', op[0]);
+    }
+    return;
+  }
+
+  if (name === 'HLT') {
+    CPU.halted = true;
+    return;
+  }
+
   throw new Error('Execute todavia no implementado para: ' + name);
 }
 
