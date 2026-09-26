@@ -55,7 +55,6 @@ function decodePhase() {
 
 /**
  * Ejecuta la instruccion previamente decodificada.
- * Por ahora prepara la escritura de MOV registro, inmediato.
  */
 function executePhase() {
   if (!decodedInstruction) {
@@ -63,22 +62,125 @@ function executePhase() {
   }
 
   const name = decodedInstruction.name;
-  const operands = decodedInstruction.operands;
+  const op = decodedInstruction.operands;
+
+  pendingWrite = null;
 
   if (name === 'MOV_REG_IMM') {
-    const registerName = getRegisterFromCode(operands[0]);
-    const value = operands[1];
-
     pendingWrite = {
       type: 'register',
-      target: registerName,
-      value: value
+      target: getRegisterFromCode(op[0]),
+      value: op[1]
     };
-
     return;
   }
 
-  throw new Error('Execute todavia no implementado para: ' + name);
+  if (name === 'MOV_REG_REG') {
+    const destino = getRegisterFromCode(op[0]);
+    const origen = getRegisterFromCode(op[1]);
+
+    pendingWrite = {
+      type: 'register',
+      target: destino,
+      value: getRegister(origen)
+    };
+    return;
+  }
+
+  if (name === 'ADD_REG_IMM') {
+    const registro = getRegisterFromCode(op[0]);
+
+    pendingWrite = {
+      type: 'register',
+      target: registro,
+      value: aluADD(getRegister(registro), op[1])
+    };
+    return;
+  }
+
+  if (name === 'ADD_REG_REG') {
+    const destino = getRegisterFromCode(op[0]);
+    const origen = getRegisterFromCode(op[1]);
+
+    pendingWrite = {
+      type: 'register',
+      target: destino,
+      value: aluADD(
+        getRegister(destino),
+        getRegister(origen)
+      )
+    };
+    return;
+  }
+
+  if (name === 'SUB_REG_IMM') {
+    const registro = getRegisterFromCode(op[0]);
+
+    pendingWrite = {
+      type: 'register',
+      target: registro,
+      value: aluSUB(getRegister(registro), op[1])
+    };
+    return;
+  }
+
+  if (name === 'SUB_REG_REG') {
+    const destino = getRegisterFromCode(op[0]);
+    const origen = getRegisterFromCode(op[1]);
+
+    pendingWrite = {
+      type: 'register',
+      target: destino,
+      value: aluSUB(
+        getRegister(destino),
+        getRegister(origen)
+      )
+    };
+    return;
+  }
+
+  if (name === 'INC') {
+    const registro = getRegisterFromCode(op[0]);
+
+    pendingWrite = {
+      type: 'register',
+      target: registro,
+      value: aluINC(getRegister(registro))
+    };
+    return;
+  }
+
+  if (name === 'DEC') {
+    const registro = getRegisterFromCode(op[0]);
+
+    pendingWrite = {
+      type: 'register',
+      target: registro,
+      value: aluDEC(getRegister(registro))
+    };
+    return;
+  }
+
+  if (name === 'CMP_REG_IMM') {
+    const registro = getRegisterFromCode(op[0]);
+    aluCMP(getRegister(registro), op[1]);
+    return;
+  }
+
+  if (name === 'CMP_REG_REG') {
+    const primero = getRegisterFromCode(op[0]);
+    const segundo = getRegisterFromCode(op[1]);
+
+    aluCMP(
+      getRegister(primero),
+      getRegister(segundo)
+    );
+    return;
+  }
+
+  throw new Error(
+    'Execute todavia no implementado para: ' + name
+  );
 }
 
 /**
