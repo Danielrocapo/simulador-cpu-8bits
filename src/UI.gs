@@ -66,6 +66,20 @@ function setupSimulatorUI() {
   ]);
   sheet.getRange('A12:A14').setFontWeight('bold');
 
+  sheet.getRange('A15:E15').setValues([[
+    'FETCH', 'DECODE', 'EXECUTE', 'STORE', 'HALT'
+  ]]);
+
+  sheet.getRange('A15').setBackground('#FFF2CC');
+  sheet.getRange('B15').setBackground('#D9EAF7');
+  sheet.getRange('C15').setBackground('#FCE5CD');
+  sheet.getRange('D15').setBackground('#D9EAD3');
+  sheet.getRange('E15').setBackground('#F4CCCC');
+
+  sheet.getRange('A15:E15')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center');
+
   sheet.getRange('H1:W1').merge();
   sheet.getRange('H1')
     .setValue('MEMORIA RAM - 256 BYTES')
@@ -144,6 +158,35 @@ function renderSimulatorUI() {
   sheet.getRange('B12').setValue(phase);
   sheet.getRange('B13').setValue(instruction);
   sheet.getRange('B14').setValue(cpu.halted ? 'SI' : 'NO');
+
+  const phaseColors = {
+    FETCH: '#FFF2CC',
+    DECODE: '#D9EAF7',
+    EXECUTE: '#FCE5CD',
+    STORE: '#D9EAD3',
+    HALT: '#F4CCCC'
+  };
+
+  sheet.getRange('B12')
+    .setBackground(
+      phaseColors[phase] || '#FFFFFF'
+    )
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center');
+
+  sheet.getRange('B13')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center');
+
+  sheet.getRange('B14')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center');
+
+  if (cpu.halted) {
+    sheet.getRange('B14').setBackground('#F4CCCC');
+  } else {
+    sheet.getRange('B14').setBackground('#D9EAD3');
+  }
 
   const memoryValues = [];
 
