@@ -151,13 +151,20 @@ function renderSimulatorUI() {
       : 'FETCH';
 
   const instruction =
-    decodedInstruction
-      ? decodedInstruction.name
-      : '-';
+    formatDecodedInstruction(decodedInstruction);
 
   sheet.getRange('B12').setValue(phase);
   sheet.getRange('B13').setValue(instruction);
   sheet.getRange('B14').setValue(cpu.halted ? 'SI' : 'NO');
+
+  sheet.getRange('A16:E16').breakApart();
+  sheet.getRange('A16:E16').merge();
+
+  sheet.getRange('A16')
+    .setValue('ACCIÓN ACTUAL: ' + getPhaseDescription(phase))
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setBackground('#F3F3F3');
 
   const phaseColors = {
     FETCH: '#FFF2CC',
@@ -215,13 +222,177 @@ function renderSimulatorUI() {
     .setBackground('#E2F0D9');
 
   const mar = cpu.MAR;
+  const pc = cpu.PC;
+
   const marRow = Math.floor(mar / 16);
   const marCol = mar % 16;
+
+  const pcRow = Math.floor(pc / 16);
+  const pcCol = pc % 16;
+
+  sheet
+    .getRange(3 + pcRow, 8 + pcCol)
+    .setBackground('#F4CCCC')
+    .setFontWeight('bold');
 
   sheet
     .getRange(3 + marRow, 8 + marCol)
     .setBackground('#FFD966')
     .setFontWeight('bold');
+
+  if (pc === mar) {
+    sheet
+      .getRange(3 + marRow, 8 + marCol)
+      .setBackground('#F6B26B');
+  }
+}
+
+function formatDecodedInstruction(inst) {
+  if (!inst) {
+    return '-';
+  }
+
+  const op = inst.operands || [];
+
+  if (inst.name === 'MOV_REG_IMM') {
+    return 'MOV ' + getRegisterFromCode(op[0]) + ', ' + op[1];
+  }
+
+  if (inst.name === 'MOV_REG_REG') {
+    return 'MOV ' +
+      getRegisterFromCode(op[0]) + ', ' +
+      getRegisterFromCode(op[1]);
+  }
+
+  if (inst.name === 'LOAD') {
+    return 'LOAD ' +
+      getRegisterFromCode(op[0]) +
+      ', [' + toHex8(op[1]) + ']';
+  }
+
+  if (inst.name === 'STORE') {
+    return 'STORE [' +
+      toHex8(op[0]) +
+      '], ' +
+      getRegisterFromCode(op[1]);
+  }
+
+  if (inst.name === 'ADD_REG_IMM') {
+    return 'ADD ' + getRegisterFromCode(op[0]) + ', ' + op[1];
+  }
+
+  if (inst.name === 'ADD_REG_REG') {
+    return 'ADD ' +
+      getRegisterFromCode(op[0]) + ', ' +
+      getRegisterFromCode(op[1]);
+  }
+
+  if (inst.name === 'SUB_REG_IMM') {
+    return 'SUB ' + getRegisterFromCode(op[0]) + ', ' + op[1];
+  }
+
+  if (inst.name === 'SUB_REG_REG') {
+    return 'SUB ' +
+      getRegisterFromCode(op[0]) + ', ' +
+      getRegisterFromCode(op[1]);
+  }
+
+  if (inst.name === 'INC') {
+    return 'INC ' + getRegisterFromCode(op[0]);
+  }
+
+  if (inst.name === 'DEC') {
+    return 'DEC ' + getRegisterFromCode(op[0]);
+  }
+
+  if (inst.name === 'CMP_REG_IMM') {
+    return 'CMP ' + getRegisterFromCode(op[0]) + ', ' + op[1];
+  }
+
+  if (inst.name === 'CMP_REG_REG') {
+    return 'CMP ' +
+      getRegisterFromCode(op[0]) + ', ' +
+      getRegisterFromCode(op[1]);
+  }
+
+  if (inst.name === 'JMP' ||
+      inst.name === 'JZ' ||
+      inst.name === 'JNZ') {
+    return inst.name + ' ' + toHex8(op[0]);
+  }
+
+  if (inst.name === 'HLT') {
+    return 'HLT';
+  }
+
+  return inst.name;
+}
+
+function getPhaseDescription(phase) {
+  const descriptions = {
+    FETCH: 'Buscando la siguiente instrucción en memoria',
+    DECODE: 'Interpretando la instrucción y sus operandos',
+    EXECUTE: 'Ejecutando la operación',
+    STORE: 'Guardando el resultado',
+    HALT: 'Programa finalizado'
+  };
+
+  return descriptions[phase] || '';
+}
+
+function beautifySimulatorUI() {
+  const sheet = getSimulatorSheet();
+
+  sheet.setHiddenGridlines(true);
+  sheet.setFrozenRows(1);
+
+  sheet.getRange('A1:E1')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold');
+
+  sheet.getRange('H1:W1')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF')
+    .setFontWeight('bold');
+
+  sheet.getRange('A3:B3')
+    .setBackground('#D9EAF7')
+    .setFontWeight('bold');
+
+  sheet.getRange('A4:B9')
+    .setBorder(true, true, true, true, true, true);
+
+  sheet.getRange('B4:B9')
+    .setHorizontalAlignment('center')
+    .setFontFamily('Roboto Mono');
+
+  sheet.getRange('D3:E3')
+    .setBackground('#D9EAF7')
+    .setFontWeight('bold');
+
+  sheet.getRange('D4:E6')
+    .setBorder(true, true, true, true, true, true);
+
+  sheet.getRange('A11:E11')
+    .setBackground('#D9EAF7')
+    .setFontWeight('bold');
+
+  sheet.getRange('A12:B14')
+    .setBorder(true, true, true, true, true, true);
+
+  sheet.getRange('H2:W18')
+    .setFontFamily('Roboto Mono')
+    .setFontSize(9);
+
+  sheet.getRange('A20:F20')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF');
+
+  sheet.getRange('A21:B60')
+    .setBorder(true, true, true, true, true, true);
+
+  renderSimulatorUI();
 }
 
 function appendMicroLog(message) {
