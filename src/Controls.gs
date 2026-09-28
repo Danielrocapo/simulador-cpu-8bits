@@ -159,7 +159,11 @@ function stepSimulator() {
       decodedInstruction.name
     );
 
-    currentPhase = 'STORE';
+    if (CPU.halted) {
+      currentPhase = 'HALT';
+    } else {
+      currentPhase = 'STORE';
+    }
   }
 
   else if (currentPhase === 'STORE') {
