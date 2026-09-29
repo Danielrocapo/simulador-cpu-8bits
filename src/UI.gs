@@ -1,4 +1,5 @@
 const SIMULATOR_SHEET = 'Simulador';
+const SELECTED_MEMORY_ADDRESS_KEY = 'SELECTED_MEMORY_ADDRESS';
 
 function getSimulatorSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -110,6 +111,33 @@ function setupSimulatorUI() {
   ]]);
   sheet.getRange('A17:E17')
     .setFontWeight('bold')
+    .setHorizontalAlignment('center');
+
+  // Inspector de memoria: permite revisar cualquier celda de RAM
+  // en hexadecimal, decimal, binario y con una interpretación mnemónica.
+  sheet.getRange('H20:W20').merge();
+  sheet.getRange('H20')
+    .setValue('INSPECTOR DE MEMORIA')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center');
+
+  sheet.getRange('H21').setValue('Dirección');
+  sheet.getRange('J21').setValue('Hex');
+  sheet.getRange('L21').setValue('Decimal');
+  sheet.getRange('N21').setValue('Binario');
+  sheet.getRange('Q21').setValue('Mnemónico');
+
+  sheet.getRange('H21').setFontWeight('bold');
+  sheet.getRange('J21').setFontWeight('bold');
+  sheet.getRange('L21').setFontWeight('bold');
+  sheet.getRange('N21').setFontWeight('bold');
+  sheet.getRange('Q21').setFontWeight('bold');
+
+  sheet.getRange('O21:P21').merge();
+  sheet.getRange('R21:W21').merge();
+  sheet.getRange('H22:W22').merge();
+  sheet.getRange('H22')
+    .setValue('Selecciona una celda de RAM para inspeccionarla.')
     .setHorizontalAlignment('center');
 
   sheet.getRange('A20:F20').merge();
@@ -245,6 +273,137 @@ function renderSimulatorUI() {
       .getRange(3 + marRow, 8 + marCol)
       .setBackground('#F6B26B');
   }
+
+  renderMemoryInspector(getSelectedMemoryAddress());
+}
+
+function getSelectedMemoryAddress() {
+  const raw = PropertiesService
+    .getDocumentProperties()
+    .getProperty(SELECTED_MEMORY_ADDRESS_KEY);
+
+  if (raw === null) {
+    return getRegister('MAR');
+  }
+
+  const address = Number(raw);
+
+  if (
+    !Number.isInteger(address) ||
+    address < 0 ||
+    address >= MEMORY_SIZE
+  ) {
+    return getRegister('MAR');
+  }
+
+  return address;
+}
+
+function setSelectedMemoryAddress(address) {
+  validateAddress(address);
+
+  PropertiesService
+    .getDocumentProperties()
+    .setProperty(
+      SELECTED_MEMORY_ADDRESS_KEY,
+      String(address)
+    );
+}
+
+function getMemoryMnemonic(address) {
+  validateAddress(address);
+
+  if (address >= DATA_START) {
+    return 'DATO';
+  }
+
+  let cursor = CODE_START;
+
+  while (cursor <= CODE_END) {
+    const opcode = Read(cursor);
+
+    if (opcode === 0x00) {
+      break;
+    }
+
+    const info = ISA[opcode];
+
+    if (!info) {
+      break;
+    }
+
+    if (address === cursor) {
+      return info.name;
+    }
+
+    if (
+      address > cursor &&
+      address < cursor + info.bytes
+    ) {
+      return 'OPERANDO';
+    }
+
+    if (opcode === 0xFF) {
+      break;
+    }
+
+    cursor += info.bytes;
+  }
+
+  return address <= CODE_END
+    ? 'LIBRE / DATO'
+    : 'DATO';
+}
+
+function renderMemoryInspector(address) {
+  validateAddress(address);
+
+  const sheet = getSimulatorSheet();
+  const info = inspectMemory(address);
+
+  sheet.getRange('I21').setValue(info.addressHex);
+  sheet.getRange('K21').setValue(info.hexadecimal);
+  sheet.getRange('M21').setValue(info.decimal);
+  sheet.getRange('O21').setValue(info.binary);
+  sheet.getRange('R21').setValue(
+    getMemoryMnemonic(address)
+  );
+
+  sheet.getRange('I21:W21')
+    .setVerticalAlignment('middle');
+}
+
+function onSelectionChange(e) {
+  if (!e || !e.range) {
+    return;
+  }
+
+  const range = e.range;
+  const sheet = range.getSheet();
+
+  if (sheet.getName() !== SIMULATOR_SHEET) {
+    return;
+  }
+
+  const row = range.getRow();
+  const col = range.getColumn();
+
+  const isMemoryCell =
+    row >= 3 &&
+    row <= 18 &&
+    col >= 8 &&
+    col <= 23;
+
+  if (!isMemoryCell) {
+    return;
+  }
+
+  const address =
+    (row - 3) * 16 +
+    (col - 8);
+
+  setSelectedMemoryAddress(address);
+  renderMemoryInspector(address);
 }
 
 function formatDecodedInstruction(inst) {
@@ -384,6 +543,21 @@ function beautifySimulatorUI() {
   sheet.getRange('H2:W18')
     .setFontFamily('Roboto Mono')
     .setFontSize(9);
+
+  sheet.getRange('H20:W20')
+    .setBackground('#1F4E78')
+    .setFontColor('#FFFFFF');
+
+  sheet.getRange('H21:W22')
+    .setBorder(true, true, true, true, true, true);
+
+  sheet.getRange('I21:W21')
+    .setFontFamily('Roboto Mono')
+    .setHorizontalAlignment('center');
+
+  sheet.getRange('H22:W22')
+    .setBackground('#F3F3F3')
+    .setFontStyle('italic');
 
   sheet.getRange('A20:F20')
     .setBackground('#1F4E78')
