@@ -349,7 +349,16 @@ function getMemoryMnemonic(address) {
     }
 
     if (address === cursor) {
-      return info.name;
+      const operands = [];
+
+      for (let i = 1; i < info.bytes; i++) {
+        operands.push(Read(cursor + i));
+      }
+
+      return formatDecodedInstruction({
+        name: info.name,
+        operands: operands
+      });
     }
 
     if (
@@ -380,7 +389,13 @@ function renderMemoryInspector(address) {
   sheet.getRange('I21').setValue(info.addressHex);
   sheet.getRange('K21').setValue(info.hexadecimal);
   sheet.getRange('M21').setValue(info.decimal);
-  sheet.getRange('O21').setValue(info.binary);
+  sheet.getRange('O21').setRichTextValue(
+    SpreadsheetApp
+      .newRichTextValue()
+      .setText(info.binary)
+      .build()
+  );
+
   sheet.getRange('R21').setValue(
     getMemoryMnemonic(address)
   );
