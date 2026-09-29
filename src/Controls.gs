@@ -1,6 +1,10 @@
 const SIM_STATE_KEY = 'SIMULATOR_STATE';
 const RUN_STATE_KEY = 'SIMULATOR_RUNNING';
 
+const DEFAULT_RUN_DELAY_MS = 300;
+const MIN_RUN_DELAY_MS = 50;
+const MAX_RUN_DELAY_MS = 2000;
+
 let currentPhase = 'FETCH';
 
 function saveSimulatorState() {
@@ -187,6 +191,26 @@ function stepSimulator() {
   SpreadsheetApp.flush();
 }
 
+function getRunDelayMs() {
+  const rawValue = getSimulatorSheet()
+    .getRange('B18')
+    .getValue();
+
+  const delay = Number(rawValue);
+
+  if (!Number.isFinite(delay)) {
+    return DEFAULT_RUN_DELAY_MS;
+  }
+
+  return Math.min(
+    MAX_RUN_DELAY_MS,
+    Math.max(
+      MIN_RUN_DELAY_MS,
+      Math.round(delay)
+    )
+  );
+}
+
 function runSimulator() {
   loadSimulatorState();
 
@@ -208,8 +232,14 @@ function runSimulator() {
     return;
   }
 
+  const runDelayMs = getRunDelayMs();
+
   setRunning(true);
-  appendMicroLog('RUN iniciado');
+  appendMicroLog(
+    'RUN iniciado - delay ' +
+    runDelayMs +
+    ' ms'
+  );
 
   while (isRunning()) {
     loadSimulatorState();
@@ -222,7 +252,7 @@ function runSimulator() {
     }
 
     stepSimulator();
-    Utilities.sleep(300);
+    Utilities.sleep(runDelayMs);
   }
 }
 
