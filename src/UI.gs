@@ -151,6 +151,11 @@ function setupSimulatorUI() {
     .setValue('Selecciona una celda de RAM para inspeccionarla.')
     .setHorizontalAlignment('center');
 
+  sheet.getRange('I21').setNumberFormat('@');
+  sheet.getRange('K21').setNumberFormat('@');
+  sheet.getRange('O21:P21').setNumberFormat('@');
+  sheet.getRange('R21:W21').setNumberFormat('@');
+
   sheet.getRange('A20:F20').merge();
   sheet.getRange('A20')
     .setValue('LOG DE MICRO-OPERACIONES')
@@ -412,6 +417,10 @@ function onSelectionChange(e) {
   const address =
     (row - 3) * 16 +
     (col - 8);
+
+  // Los triggers simples se ejecutan en una ejecución separada.
+  // Recuperamos el estado persistido antes de inspeccionar la RAM.
+  loadSimulatorState();
 
   setSelectedMemoryAddress(address);
   renderMemoryInspector(address);
