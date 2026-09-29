@@ -389,12 +389,11 @@ function renderMemoryInspector(address) {
   sheet.getRange('I21').setValue(info.addressHex);
   sheet.getRange('K21').setValue(info.hexadecimal);
   sheet.getRange('M21').setValue(info.decimal);
-  sheet.getRange('O21').setRichTextValue(
-    SpreadsheetApp
-      .newRichTextValue()
-      .setText(info.binary)
-      .build()
-  );
+  sheet.getRange('O21:P21')
+    .setNumberFormat('@');
+
+  sheet.getRange('O21')
+    .setFormula('="' + info.binary + '"');
 
   sheet.getRange('R21').setValue(
     getMemoryMnemonic(address)
