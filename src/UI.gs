@@ -113,6 +113,17 @@ function setupSimulatorUI() {
     .setFontWeight('bold')
     .setHorizontalAlignment('center');
 
+  sheet.getRange('A18').setValue('DELAY RUN (ms)');
+  sheet.getRange('B18').setValue(300);
+
+  const delayValidation = SpreadsheetApp
+    .newDataValidation()
+    .requireNumberBetween(50, 2000)
+    .setAllowInvalid(false)
+    .build();
+
+  sheet.getRange('B18').setDataValidation(delayValidation);
+
   // Inspector de memoria: permite revisar cualquier celda de RAM
   // en hexadecimal, decimal, binario y con una interpretación mnemónica.
   sheet.getRange('H20:W20').merge();
@@ -558,6 +569,17 @@ function beautifySimulatorUI() {
   sheet.getRange('H22:W22')
     .setBackground('#F3F3F3')
     .setFontStyle('italic');
+
+  sheet.getRange('A18:B18')
+    .setBorder(true, true, true, true, true, true);
+
+  sheet.getRange('A18')
+    .setBackground('#D9EAF7')
+    .setFontWeight('bold');
+
+  sheet.getRange('B18')
+    .setHorizontalAlignment('center')
+    .setFontWeight('bold');
 
   sheet.getRange('A20:F20')
     .setBackground('#1F4E78')
